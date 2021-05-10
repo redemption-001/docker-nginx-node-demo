@@ -1,1 +1,4 @@
-# docker-nginx-node-demo
+Run:
+```bash
+docker-compose up -d
+```

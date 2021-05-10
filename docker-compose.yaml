@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+    mysql:
+        build: 
+            context: ./mysql
+            dockerfile: Dockerfile
+        image: redemption001/mysql
+        #no caso do mysql, no boot, precisa desse comando
+        #vai depois do entrypoint padrão
+        command: --innodb-use-native-aio=0
+        container_name: db
+        #se o container cair, sempre restarta
+        restart: always
+        #se precisar entrar e digitar de forma interativa
+        tty: true
+        #copia tudo local tbm se o container morrer
+        volumes:
+            - ./dbdata:/var/lib/mysql
+        #variaveis de ambiente
+        environment: 
+            - MYSQL_DATABASE=nodedb
+            - MYSQL_ROOT_PASSWORD=root
+        networks:
+            - node-network
+    
+    node:
+        build:
+            context: ./node
+            dockerfile: Dockerfile
+        image: redemption001/app
+        container_name: app
+        tty: true
+        #adicionando dockerize
+        entrypoint: /usr/local/bin/dockerize -wait tcp://db:3306 -timeout 150s docker-entrypoint.sh
+        command: >
+            sh -c "npm install &&
+                   node /usr/src/app/index.js"
+        volumes:
+            - ./node:/usr/src/app
+        #ports:
+        #    - "3000:3000"
+        networks: 
+            - node-network
+        tty: true
+        depends_on:
+            - mysql
+            
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile.prod
+        image: redemption001/nginx
+        container_name: nginx
+        networks: 
+            - node-network
+        ports: 
+            - "8080:80"
+
+networks: 
+    node-network:
+        driver: bridge
