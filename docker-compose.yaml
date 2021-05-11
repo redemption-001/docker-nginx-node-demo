@@ -49,13 +49,19 @@ services:
     nginx:
         build:
             context: ./nginx
-            dockerfile: Dockerfile.prod
+            dockerfile: Dockerfile
+        #entrypoint: /usr/local/bin/dockerize -wait tcp://app:3000 -timeout 150s /docker-entrypoint.sh nginx -g 'daemon off;'
+        entrypoint: /usr/local/bin/dockerize -wait tcp://app:3000 -timeout 150s nginx -g 'daemon off;'
+        #command: /etc/nginx -g 'daemon off;'
+        #command: nginx -g 'daemon off;'
         image: redemption001/nginx
         container_name: nginx
         networks: 
             - node-network
         ports: 
             - "8080:80"
+        depends_on:
+            - node
 
 networks: 
     node-network:
